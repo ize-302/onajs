@@ -25,6 +25,7 @@
   "peerDependencies": {
     "vite": ">=5"
   },
+  "license": "MIT",
   "engines": { "node": ">=18" },
   "devDependencies": {
     "@types/node": "^22.9.0",

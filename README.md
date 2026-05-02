@@ -127,9 +127,9 @@ export default defineConfig({
 
 ## Packages
 
-| Package                                             | Description                 |
-| --------------------------------------------------- | --------------------------- |
-| [`@ize-302/onajs`](./packages/onajs)                | Vite plugin + route scanner |
+| Package                                            | Description                 |
+| -------------------------------------------------- | --------------------------- |
+| [`@ize-302/onajs`](./packages/onajs)               | Vite plugin + route scanner |
 | [`@ize-302/create-onajs`](./packages/create-onajs) | Project scaffolder          |
 
 ## Contributing
@@ -164,14 +164,6 @@ Then `npm install && npm run dev` in that project.
 
 For live rebuilds while iterating, run `npm run dev` from the root — tsup watches `src/` and rebuilds `dist/` on every save.
 
-**3. Release**
+**3. Open a PR**
 
-Pick the right bump:
-
-```bash
-npm run release:patch   # bug fix         0.0.2 → 0.0.3
-npm run release:minor   # new feature     0.0.2 → 0.1.0
-npm run release:major   # breaking change 0.0.2 → 1.0.0
-```
-
-Each command bumps versions in both `package.json` files, builds `onajs`, then publishes both packages to npm.
+Push your branch and open a pull request.
