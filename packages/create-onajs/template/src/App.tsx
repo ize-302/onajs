@@ -1,16 +1,13 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter } from 'react-router-dom'
 import { Suspense } from 'react'
+import { OnaRoutes } from '@ize-302/onajs/routes'
 import { routes } from 'virtual:ona-manifest'
 
 export default function App() {
   return (
     <BrowserRouter>
       <Suspense fallback={null}>
-        <Routes>
-          {routes.map(({ path, component: C }) => (
-            <Route key={path} path={path} element={<C />} />
-          ))}
-        </Routes>
+        <OnaRoutes routes={routes} />
       </Suspense>
     </BrowserRouter>
   )

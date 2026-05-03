@@ -10,7 +10,8 @@
     "release:patch": "npm version patch -w packages/onajs -w packages/create-onajs && npm run release",
     "release:minor": "npm version minor -w packages/onajs -w packages/create-onajs && npm run release",
     "release:major": "npm version major -w packages/onajs -w packages/create-onajs && npm run release",
-    "release": "npm run build && npm publish -w packages/onajs --access public && npm publish -w packages/create-onajs --access public",
+    "sync-version": "node -e \"const fs=require('fs');const v=JSON.parse(fs.readFileSync('./packages/onajs/package.json')).version;const f='./packages/create-onajs/template/_package.json';const p=JSON.parse(fs.readFileSync(f));p.devDependencies['@ize-302/onajs']='^'+v;fs.writeFileSync(f,JSON.stringify(p,null,2)+'\\n')\"",
+    "release": "npm run sync-version && npm run build && npm publish -w packages/onajs --access public && npm publish -w packages/create-onajs --access public",
     "postrelease": "git push && git push --tags && gh release create v$(node -p \"require('./packages/onajs/package.json').version\") --generate-notes"
   }
 }

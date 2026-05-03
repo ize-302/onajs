@@ -2,34 +2,68 @@ import path from 'node:path'
 import fg from 'fast-glob'
 const { glob } = fg
 
-export interface RouteEntry {
-  path: string
-  file: string // absolute
+export interface RouteNode {
+  segment: string
+  pageFile?: string
+  layoutFile?: string
+  children: RouteNode[]
 }
 
-export async function scanRoutes(root: string, pagesDir: string): Promise<RouteEntry[]> {
-  const absDir = path.join(root, pagesDir)
-  const files = await glob(`${absDir}/**/*.{ts,tsx}`, {
-    ignore: [`${absDir}/**/_*.{ts,tsx}`]
+export async function scanRoutes(root: string, appDir: string): Promise<RouteNode> {
+  const absDir = path.join(root, appDir)
+  const files = await glob(`${absDir}/**/{page,layout}.{ts,tsx}`)
+
+  const dirMap = new Map<string, { page?: string; layout?: string }>()
+
+  for (const f of files) {
+    const dir = path.dirname(f)
+    const base = path.basename(f, path.extname(f))
+
+    let d = dir
+    while (d.startsWith(absDir)) {
+      if (!dirMap.has(d)) dirMap.set(d, {})
+      if (d === absDir) break
+      d = path.dirname(d)
+    }
+
+    const entry = dirMap.get(dir)!
+    if (base === 'page') entry.page = f
+    else if (base === 'layout') entry.layout = f
+  }
+
+  return buildNode(absDir, absDir, dirMap)
+}
+
+function buildNode(
+  absDir: string,
+  dir: string,
+  dirMap: Map<string, { page?: string; layout?: string }>
+): RouteNode {
+  const entry = dirMap.get(dir) ?? {}
+  const rawSegment = path.basename(dir)
+  const segment =
+    dir === absDir
+      ? ''
+      : rawSegment
+          .replace(/\[\.\.\.(\w+)\]/g, '*')
+          .replace(/\[(\w+)\]/g, ':$1')
+
+  const children: RouteNode[] = []
+  for (const [childDir] of dirMap) {
+    if (path.dirname(childDir) === dir && childDir !== dir) {
+      children.push(buildNode(absDir, childDir, dirMap))
+    }
+  }
+
+  children.sort((a, b) => {
+    const rank = (s: string) => (s === '*' ? 2 : s.startsWith(':') ? 1 : 0)
+    return rank(a.segment) - rank(b.segment)
   })
-  return files.map((f: string) => fileToRoute(f, absDir)).sort(bySpecificity)
-}
 
-function fileToRoute(absFile: string, absDir: string): RouteEntry {
-  const routePath =
-    absFile
-      .slice(absDir.length)
-      .replace(/\.(tsx?)$/, '')
-      .replace(/\/index$/, '/')
-      .replace(/\[\.\.\.(\w+)\]/g, '*')
-      .replace(/\[(\w+)\]/g, ':$1')
-      .replace(/\/$/, '') || '/'
-
-  return { path: routePath, file: absFile }
-}
-
-function bySpecificity(a: RouteEntry, b: RouteEntry): number {
-  const rank = (r: RouteEntry) =>
-    r.path.includes('*') ? 2 : r.path.includes(':') ? 1 : 0
-  return rank(a) - rank(b)
+  return {
+    segment,
+    ...(entry.page && { pageFile: entry.page }),
+    ...(entry.layout && { layoutFile: entry.layout }),
+    children,
+  }
 }

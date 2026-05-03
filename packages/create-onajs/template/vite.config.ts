@@ -5,7 +5,7 @@ import { fileRouter } from '@ize-302/onajs'
 export default defineConfig({
   plugins: [
     react(),
-    fileRouter({ pagesDir: 'src/pages' })
+    fileRouter({ appDir: 'src/app' })
   ],
   resolve: {
     extensions: ['.tsx', '.ts', '.js']

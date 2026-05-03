@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom'
 
-export default function Blog() {
-  const posts = ['hello-world', 'file-based-routing', 'vite-plugins']
+const posts = ['hello-world', 'file-based-routing', 'vite-plugins']
 
+export default function Blog() {
   return (
     <div>
       <h1>Blog</h1>
@@ -13,7 +13,6 @@ export default function Blog() {
           </li>
         ))}
       </ul>
-      <Link to="/">← Home</Link>
     </div>
   )
 }
