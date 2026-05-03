@@ -4,8 +4,7 @@ OnaJS is a file-based routing layer for React + Vite projects.
 
 ## Why OnaJS
 
-In a plain Vite + React app, you manually define all routes in code. With OnaJS, you just create files in src/pages/ and routes are generated automatically -
-similar to how Next.js or Remix handle routing, but without the full framework overhead.
+In a plain Vite + React app, you manually define all routes in code. With OnaJS, you just create files in `src/app/` and routes are generated automatically — similar to how Next.js App Router handles routing, but without the full framework overhead.
 
 ## Quick start
 
@@ -24,6 +23,7 @@ To add OnaJS to an existing Vite + React project:
 
 ```bash
 npm install -D @ize-302/onajs
+npm install react-router-dom
 ```
 
 **2. Register the plugin**
@@ -46,11 +46,8 @@ export default defineConfig({
 /// <reference types="vite/client" />
 
 declare module "virtual:ona-manifest" {
-  import type { ComponentType } from "react";
-  export const routes: Array<{
-    path: string;
-    component: ComponentType;
-  }>;
+  import type { RouteNode } from "@ize-302/onajs/routes";
+  export const routes: RouteNode;
 }
 ```
 
@@ -58,19 +55,16 @@ declare module "virtual:ona-manifest" {
 
 ```tsx
 // src/App.tsx
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter } from "react-router-dom";
 import { Suspense } from "react";
+import { OnaRoutes } from "@ize-302/onajs/routes";
 import { routes } from "virtual:ona-manifest";
 
 export default function App() {
   return (
     <BrowserRouter>
       <Suspense fallback={null}>
-        <Routes>
-          {routes.map(({ path, component: C }) => (
-            <Route key={path} path={path} element={<C />} />
-          ))}
-        </Routes>
+        <OnaRoutes routes={routes} />
       </Suspense>
     </BrowserRouter>
   );
@@ -80,7 +74,7 @@ export default function App() {
 **5. Create your first page**
 
 ```tsx
-// src/pages/index.tsx
+// src/app/page.tsx
 export default function Home() {
   return <h1>Hello OnaJS</h1>;
 }
@@ -88,20 +82,20 @@ export default function Home() {
 
 ## File conventions
 
-Files in `src/pages/` map directly to routes:
+Files in `src/app/` follow Next.js-style app router conventions:
 
-| File                           | Route         |
-| ------------------------------ | ------------- |
-| `src/pages/index.tsx`          | `/`           |
-| `src/pages/about.tsx`          | `/about`      |
-| `src/pages/blog/index.tsx`     | `/blog`       |
-| `src/pages/blog/[slug].tsx`    | `/blog/:slug` |
-| `src/pages/blog/[...rest].tsx` | `/blog/*`     |
+| File                              | Route         |
+| --------------------------------- | ------------- |
+| `src/app/page.tsx`                | `/`           |
+| `src/app/about/page.tsx`          | `/about`      |
+| `src/app/blog/page.tsx`           | `/blog`       |
+| `src/app/blog/[slug]/page.tsx`    | `/blog/:slug` |
+| `src/app/blog/[...rest]/page.tsx` | `/blog/*`     |
 
-Each file must export a default React component.
+Each `page.tsx` must export a default React component.
 
 ```tsx
-// src/pages/blog/[slug].tsx
+// src/app/blog/[slug]/page.tsx
 import { useParams } from "react-router-dom";
 
 export default function BlogPost() {
@@ -110,27 +104,44 @@ export default function BlogPost() {
 }
 ```
 
-Prefix a file with `_` to exclude it from routing (e.g. `_components.tsx`).
+### Layouts
+
+Place a `layout.tsx` alongside any `page.tsx` to wrap that segment and all its children. Layouts must render `<Outlet />` from `react-router-dom` to display child routes.
+
+```tsx
+// src/app/layout.tsx
+import { Outlet } from "react-router-dom";
+
+export default function RootLayout() {
+  return (
+    <div>
+      <nav>{/* shared nav */}</nav>
+      <Outlet />
+    </div>
+  );
+}
+```
+
+Layouts nest automatically. A `layout.tsx` inside `src/app/blog/` only wraps the blog segment.
 
 ## How it works
 
-OnaJS ships a Vite plugin (`fileRouter`) that scans `src/pages/` at build time and generates a virtual module `virtual:ona-manifest` containing lazy-loaded route definitions. No code generation in your project — it all lives in `node_modules`.
+OnaJS ships a Vite plugin (`fileRouter`) that scans `src/app/` at build time and generates a virtual module `virtual:ona-manifest` containing a lazy-loaded route tree. `OnaRoutes` (from `@ize-302/onajs/routes`) walks the tree and renders the corresponding nested `<Route>` elements. No code generation in your project — it all lives in `node_modules`.
+
+## Plugin options
 
 ```ts
-// vite.config.ts
-import { fileRouter } from "@ize-302/onajs";
-
-export default defineConfig({
-  plugins: [react(), fileRouter({ pagesDir: "src/pages" })],
-});
+fileRouter({
+  appDir: "src/app", // default
+})
 ```
 
 ## Packages
 
-| Package                                            | Description                 |
-| -------------------------------------------------- | --------------------------- |
-| [`@ize-302/onajs`](./packages/onajs)               | Vite plugin + route scanner |
-| [`@ize-302/create-onajs`](./packages/create-onajs) | Project scaffolder          |
+| Package                                            | Description                      |
+| -------------------------------------------------- | -------------------------------- |
+| [`@ize-302/onajs`](./packages/onajs)               | Vite plugin, route scanner, renderer |
+| [`@ize-302/create-onajs`](./packages/create-onajs) | Project scaffolder               |
 
 ## Contributing
 
@@ -148,19 +159,18 @@ npm run build   # compile packages/onajs → dist/
 
 Edit files in `packages/onajs/src/` or `packages/create-onajs/`.
 
-**2. Build & verify**
+**2. Build & test locally**
 
 ```bash
 npm run build
+npm pack -w packages/onajs   # produces a tarball
+
+node packages/create-onajs/bin/index.js example
+cd example
+npm install
+npm install /path/to/ize-302-onajs-x.x.x.tgz
+npm run dev
 ```
-
-Test locally by pointing a scaffolded project at the local package:
-
-```json
-"@ize-302/onajs": "file:../packages/onajs"
-```
-
-Then `npm install && npm run dev` in that project.
 
 For live rebuilds while iterating, run `npm run dev` from the root — tsup watches `src/` and rebuilds `dist/` on every save.
 
