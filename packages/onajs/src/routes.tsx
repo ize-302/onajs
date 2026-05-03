@@ -23,11 +23,15 @@ function renderNode(node: RouteNode, isRoot = false): ReactNode {
 
   if (P) {
     if (!segment && !isRoot) return <Route key="index" index element={<P />} />
-    return (
-      <Route key={routePath} path={routePath} element={<P />}>
-        {children.map(c => renderNode(c))}
-      </Route>
-    )
+    if (children.length > 0) {
+      return (
+        <Route key={routePath} path={routePath}>
+          <Route index element={<P />} />
+          {children.map(c => renderNode(c))}
+        </Route>
+      )
+    }
+    return <Route key={routePath} path={routePath} element={<P />} />
   }
 
   return (

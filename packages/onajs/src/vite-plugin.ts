@@ -43,7 +43,7 @@ export function fileRouter(options: FileRouterOptions = {}): Plugin {
   }
 }
 
-function codegen(tree: RouteNode): string {
+export function codegen(tree: RouteNode): string {
   const lines: string[] = [`import { lazy } from 'react'`]
   let counter = 0
   const idMap = new Map<string, string>()
