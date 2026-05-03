@@ -106,17 +106,17 @@ export default function BlogPost() {
 
 ### Layouts
 
-Place a `layout.tsx` alongside any `page.tsx` to wrap that segment and all its children. Layouts must render `<Outlet />` from `react-router-dom` to display child routes.
+Place a `layout.tsx` alongside any `page.tsx` to wrap that segment and all its children. Layouts receive a `children` prop where child routes are rendered — no need to import `<Outlet />`.
 
 ```tsx
 // src/app/layout.tsx
-import { Outlet } from "react-router-dom";
+import type { ReactNode } from "react";
 
-export default function RootLayout() {
+export default function RootLayout({ children }: { children?: ReactNode }) {
   return (
     <div>
       <nav>{/* shared nav */}</nav>
-      <Outlet />
+      {children}
     </div>
   );
 }
