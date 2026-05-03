@@ -1,6 +1,6 @@
 {
   "name": "@ize-302/create-onajs",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "type": "module",
   "bin": "./bin/index.js",
   "files": [
