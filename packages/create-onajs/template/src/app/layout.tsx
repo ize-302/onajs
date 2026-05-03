@@ -1,6 +1,7 @@
-import { Outlet, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
+import type { ReactNode } from "react";
 
-export default function RootLayout() {
+export default function RootLayout({ children }: { children?: ReactNode }) {
   return (
     <div>
       <nav>
@@ -8,7 +9,7 @@ export default function RootLayout() {
         {" · "}
         <Link to="/blog">Blog</Link>
       </nav>
-      <Outlet />
+      {children}
     </div>
   );
 }

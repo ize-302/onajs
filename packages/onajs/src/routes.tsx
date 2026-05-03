@@ -3,7 +3,7 @@ import type { ComponentType, ReactNode } from 'react'
 
 export interface RouteNode {
   segment: string
-  layout?: ComponentType
+  layout?: ComponentType<{ children?: ReactNode }>
   page?: ComponentType
   children: RouteNode[]
 }
@@ -14,7 +14,7 @@ function renderNode(node: RouteNode, isRoot = false): ReactNode {
 
   if (L) {
     return (
-      <Route key={routePath} path={routePath} element={<L />}>
+      <Route key={routePath} path={routePath} element={<L><Outlet /></L>}>
         {P && <Route index element={<P />} />}
         {children.map(c => renderNode(c))}
       </Route>
