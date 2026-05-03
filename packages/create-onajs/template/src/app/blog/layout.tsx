@@ -1,9 +1,9 @@
-import { Outlet } from 'react-router-dom'
+import type { ReactNode } from 'react'
 
-export default function BlogLayout() {
+export default function BlogLayout({ children }: { children?: ReactNode }) {
   return (
     <section>
-      <Outlet />
+      {children}
     </section>
   )
 }
