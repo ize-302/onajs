@@ -105,6 +105,24 @@ describe('sort order', () => {
   })
 })
 
+describe('route groups', () => {
+  it('(group) folder preserves parens in segment', async () => {
+    await touch('(auth)', 'login', 'page.tsx')
+    const tree = await scanRoutes(dir, '.')
+    const group = tree.children[0]
+    expect(group.segment).toBe('(auth)')
+    expect(group.children[0].segment).toBe('login')
+  })
+
+  it('(group) layout is captured', async () => {
+    await touch('(auth)', 'layout.tsx')
+    await touch('(auth)', 'login', 'page.tsx')
+    const tree = await scanRoutes(dir, '.')
+    const group = tree.children[0]
+    expect(group.layoutFile).toMatch(/layout\.tsx$/)
+  })
+})
+
 describe('appDir resolution', () => {
   it('resolves appDir relative to root', async () => {
     await mkdir(join(dir, 'src', 'app'), { recursive: true })

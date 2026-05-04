@@ -2,6 +2,7 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
 import { MemoryRouter, Outlet, useParams } from 'react-router-dom'
+import type { ReactNode } from 'react'
 import { OnaRoutes, type RouteNode } from '../src/routes'
 
 afterEach(cleanup)
@@ -80,6 +81,35 @@ describe('OnaRoutes', () => {
     }
     renderAt(routes, '/blog/hello-world')
     expect(screen.getByText('Post: hello-world')).toBeDefined()
+  })
+
+  it('route group layout wraps children without adding URL segment', () => {
+    const GroupLayout = ({ children }: { children?: ReactNode }) => (
+      <div><span>Group layout</span>{children}</div>
+    )
+    const routes: RouteNode = {
+      segment: '',
+      children: [{
+        segment: '(auth)',
+        layout: GroupLayout,
+        children: [{ segment: 'login', page: () => <p>Login</p>, children: [] }]
+      }]
+    }
+    renderAt(routes, '/login')
+    expect(screen.getByText('Group layout')).toBeDefined()
+    expect(screen.getByText('Login')).toBeDefined()
+  })
+
+  it('route group without layout renders children at correct paths', () => {
+    const routes: RouteNode = {
+      segment: '',
+      children: [{
+        segment: '(group)',
+        children: [{ segment: 'about', page: () => <p>About</p>, children: [] }]
+      }]
+    }
+    renderAt(routes, '/about')
+    expect(screen.getByText('About')).toBeDefined()
   })
 
   it('root page not rendered at child path', () => {
