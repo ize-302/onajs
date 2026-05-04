@@ -1,4 +1,5 @@
 import { Route, Routes, Outlet } from 'react-router-dom'
+import { Fragment } from 'react'
 import type { ComponentType, ReactNode } from 'react'
 
 export interface RouteNode {
@@ -10,6 +11,18 @@ export interface RouteNode {
 
 function renderNode(node: RouteNode, isRoot = false): ReactNode {
   const { segment, layout: L, page: P, children } = node
+
+  if (!isRoot && /^\(.*\)$/.test(segment)) {
+    if (L) {
+      return (
+        <Route key={segment} element={<L><Outlet /></L>}>
+          {children.map(c => renderNode(c))}
+        </Route>
+      )
+    }
+    return <Fragment key={segment}>{children.map(c => renderNode(c))}</Fragment>
+  }
+
   const routePath = isRoot ? '/' : segment
 
   if (L) {
