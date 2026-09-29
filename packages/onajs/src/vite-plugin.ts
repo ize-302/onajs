@@ -61,7 +61,7 @@ export function isRouteFile(
 }
 
 export function codegen(tree: RouteNode): string {
-	const lines: string[] = [`import { lazy } from 'react'`];
+	const lines: string[] = [];
 	let counter = 0;
 	const idMap = new Map<string, string>();
 
@@ -70,14 +70,14 @@ export function codegen(tree: RouteNode): string {
 			const id = `_c${counter++}`;
 			idMap.set(node.layoutFile, id);
 			lines.push(
-				`const ${id} = lazy(() => import(${JSON.stringify(node.layoutFile)}))`,
+				`const ${id} = () => import(${JSON.stringify(node.layoutFile)})`,
 			);
 		}
 		if (node.pageFile && !idMap.has(node.pageFile)) {
 			const id = `_c${counter++}`;
 			idMap.set(node.pageFile, id);
 			lines.push(
-				`const ${id} = lazy(() => import(${JSON.stringify(node.pageFile)}))`,
+				`const ${id} = () => import(${JSON.stringify(node.pageFile)})`,
 			);
 		}
 		for (const child of node.children) collectFiles(child);
@@ -93,6 +93,6 @@ export function codegen(tree: RouteNode): string {
 		return `{ ${parts.join(", ")} }`;
 	}
 
-	lines.push(`\nexport const routes = ${serializeNode(tree)}`);
+	lines.push(`export const routes = ${serializeNode(tree)}`);
 	return lines.join("\n");
 }

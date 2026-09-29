@@ -30,7 +30,7 @@
   },
   "peerDependencies": {
     "react": ">=18",
-    "react-router-dom": ">=6",
+    "react-router-dom": ">=6.9",
     "vite": ">=5"
   },
   "license": "MIT",
