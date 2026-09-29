@@ -6,14 +6,15 @@ export interface RouteNode {
   segment: string
   pageFile?: string
   layoutFile?: string
+  notFoundFile?: string
   children: RouteNode[]
 }
 
 export async function scanRoutes(root: string, appDir: string): Promise<RouteNode> {
   const absDir = path.join(root, appDir)
-  const files = await glob(`${absDir}/**/{page,layout}.{ts,tsx}`)
+  const files = await glob(`${absDir}/**/{page,layout,not-found}.{ts,tsx}`)
 
-  const dirMap = new Map<string, { page?: string; layout?: string }>()
+  const dirMap = new Map<string, { page?: string; layout?: string; notFound?: string }>()
 
   for (const f of files) {
     const dir = path.dirname(f)
@@ -29,6 +30,7 @@ export async function scanRoutes(root: string, appDir: string): Promise<RouteNod
     const entry = dirMap.get(dir)!
     if (base === 'page') entry.page = f
     else if (base === 'layout') entry.layout = f
+    else if (base === 'not-found') entry.notFound = f
   }
 
   return buildNode(absDir, absDir, dirMap)
@@ -37,7 +39,7 @@ export async function scanRoutes(root: string, appDir: string): Promise<RouteNod
 function buildNode(
   absDir: string,
   dir: string,
-  dirMap: Map<string, { page?: string; layout?: string }>
+  dirMap: Map<string, { page?: string; layout?: string; notFound?: string }>
 ): RouteNode {
   const entry = dirMap.get(dir) ?? {}
   const rawSegment = path.basename(dir)
@@ -64,6 +66,7 @@ function buildNode(
     segment,
     ...(entry.page && { pageFile: entry.page }),
     ...(entry.layout && { layoutFile: entry.layout }),
+    ...(entry.notFound && { notFoundFile: entry.notFound }),
     children,
   }
 }

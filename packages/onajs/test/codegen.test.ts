@@ -4,15 +4,15 @@ import type { RouteNode } from '../src/scan-routes'
 
 function node(
   segment: string,
-  opts: { pageFile?: string; layoutFile?: string; children?: RouteNode[] } = {}
+  opts: { pageFile?: string; layoutFile?: string; notFoundFile?: string; children?: RouteNode[] } = {}
 ): RouteNode {
   return { segment, children: [], ...opts }
 }
 
 describe('codegen', () => {
-  it('always starts with lazy import', () => {
+  it('does not import react', () => {
     const out = codegen(node(''))
-    expect(out).toMatch(/^import \{ lazy \} from 'react'/)
+    expect(out).not.toContain(`from 'react'`)
   })
 
   it('always exports routes', () => {
@@ -20,19 +20,19 @@ describe('codegen', () => {
     expect(out).toContain('export const routes =')
   })
 
-  it('empty root produces no lazy imports', () => {
+  it('empty root produces no imports', () => {
     const out = codegen(node(''))
-    expect(out).not.toContain('lazy(')
+    expect(out).not.toContain('import(')
   })
 
-  it('page file generates lazy import', () => {
+  it('page file generates import function', () => {
     const out = codegen(node('', { pageFile: '/app/page.tsx' }))
-    expect(out).toContain(`lazy(() => import("/app/page.tsx"))`)
+    expect(out).toContain(`() => import("/app/page.tsx")`)
   })
 
-  it('layout file generates lazy import', () => {
+  it('layout file generates import function', () => {
     const out = codegen(node('', { layoutFile: '/app/layout.tsx' }))
-    expect(out).toContain(`lazy(() => import("/app/layout.tsx"))`)
+    expect(out).toContain(`() => import("/app/layout.tsx")`)
   })
 
   it('page referenced as page in routes object', () => {
@@ -43,6 +43,12 @@ describe('codegen', () => {
   it('layout referenced as layout in routes object', () => {
     const out = codegen(node('', { layoutFile: '/app/layout.tsx' }))
     expect(out).toMatch(/layout: _c\d+/)
+  })
+
+  it('not-found referenced as notFound in routes object', () => {
+    const out = codegen(node('', { notFoundFile: '/app/not-found.tsx' }))
+    expect(out).toContain(`() => import("/app/not-found.tsx")`)
+    expect(out).toMatch(/notFound: _c\d+/)
   })
 
   it('page and layout get separate ids', () => {
@@ -59,7 +65,7 @@ describe('codegen', () => {
       children: [node('about', { pageFile: shared })]
     })
     const out = codegen(tree)
-    const matches = out.match(/lazy\(\(\) => import\("\/app\/page\.tsx"\)\)/g) ?? []
+    const matches = out.match(/\(\) => import\("\/app\/page\.tsx"\)/g) ?? []
     expect(matches).toHaveLength(1)
   })
 
@@ -86,7 +92,7 @@ describe('codegen', () => {
     const out = codegen(tree)
     expect(out).toContain(`segment: "blog"`)
     expect(out).toContain(`segment: ":slug"`)
-    expect(out).toContain(`lazy(() => import("/app/blog/page.tsx"))`)
-    expect(out).toContain(`lazy(() => import("/app/blog/[slug]/page.tsx"))`)
+    expect(out).toContain(`() => import("/app/blog/page.tsx")`)
+    expect(out).toContain(`() => import("/app/blog/[slug]/page.tsx")`)
   })
 })

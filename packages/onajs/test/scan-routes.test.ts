@@ -123,6 +123,22 @@ describe('route groups', () => {
   })
 })
 
+describe('not-found', () => {
+  it('not-found.tsx at root is captured', async () => {
+    await touch('not-found.tsx')
+    const tree = await scanRoutes(dir, '.')
+    expect(tree.notFoundFile).toMatch(/not-found\.tsx$/)
+  })
+
+  it('nested not-found.tsx is captured on its segment', async () => {
+    await touch('blog', 'page.tsx')
+    await touch('blog', 'not-found.tsx')
+    const tree = await scanRoutes(dir, '.')
+    expect(tree.notFoundFile).toBeUndefined()
+    expect(tree.children[0].notFoundFile).toMatch(/blog\/not-found\.tsx$/)
+  })
+})
+
 describe('appDir resolution', () => {
   it('resolves appDir relative to root', async () => {
     await mkdir(join(dir, 'src', 'app'), { recursive: true })

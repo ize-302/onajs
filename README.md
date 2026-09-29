@@ -54,22 +54,20 @@ declare module "virtual:ona-manifest" {
 **4. Render routes in your app**
 
 ```tsx
-// src/App.tsx
-import { BrowserRouter } from "react-router-dom";
-import { Suspense } from "react";
-import { OnaRoutes } from "@ize-302/onajs/routes";
+// src/main.tsx
+import { createRoot } from "react-dom/client";
+import { RouterProvider } from "react-router-dom";
+import { createOnaRouter } from "@ize-302/onajs/routes";
 import { routes } from "virtual:ona-manifest";
 
-export default function App() {
-  return (
-    <BrowserRouter>
-      <Suspense fallback={null}>
-        <OnaRoutes routes={routes} />
-      </Suspense>
-    </BrowserRouter>
-  );
-}
+const router = createOnaRouter(routes);
+
+createRoot(document.getElementById("root")!).render(
+  <RouterProvider router={router} />
+);
 ```
+
+`createOnaRouter(routes, opts)` wraps React Router's `createBrowserRouter` and accepts the same options (e.g. `basename`). To use a different router (`createHashRouter`, `createMemoryRouter`), pass `toRouteObjects(routes)` to it instead.
 
 **5. Create your first page**
 
@@ -124,9 +122,32 @@ export default function RootLayout({ children }: { children?: ReactNode }) {
 
 Layouts nest automatically. A `layout.tsx` inside `src/app/blog/` only wraps the blog segment.
 
+### Data loading
+
+A `page.tsx` or `layout.tsx` can export a React Router [`loader`](https://reactrouter.com/en/main/route/loader) and/or [`action`](https://reactrouter.com/en/main/route/action). The loader runs before the route renders; read its result with `useLoaderData()`.
+
+```tsx
+// src/app/blog/[slug]/page.tsx
+import { useLoaderData, type LoaderFunctionArgs } from "react-router-dom";
+
+export async function loader({ params }: LoaderFunctionArgs) {
+  const res = await fetch(`/api/posts/${params.slug}`);
+  return res.json();
+}
+
+export default function BlogPost() {
+  const post = useLoaderData() as { title: string };
+  return <h1>{post.title}</h1>;
+}
+```
+
+Loaders run in the browser — OnaJS has no server. Nested loaders (layout + page) run in parallel.
+
 ## How it works
 
-OnaJS ships a Vite plugin (`fileRouter`) that scans `src/app/` at build time and generates a virtual module `virtual:ona-manifest` containing a lazy-loaded route tree. `OnaRoutes` (from `@ize-302/onajs/routes`) walks the tree and renders the corresponding nested `<Route>` elements. No code generation in your project — it all lives in `node_modules`.
+OnaJS ships a Vite plugin (`fileRouter`) that scans `src/app/` at build time and generates a virtual module `virtual:ona-manifest` containing a route tree of `() => import(...)` functions. `createOnaRouter` (from `@ize-302/onajs/routes`) turns that tree into React Router route objects using [`route.lazy`](https://reactrouter.com/en/main/route/lazy), so each page is code-split and its `loader`/`action` are picked up on demand. No code generation in your project — it all lives in `node_modules`.
+
+Requires `react-router-dom` 6.9 or newer.
 
 ## Plugin options
 
