@@ -18,6 +18,7 @@ export interface RouteNode {
   segment: string;
   layout?: RouteImport;
   page?: RouteImport;
+  notFound?: RouteImport;
   children: RouteNode[];
 }
 
@@ -39,8 +40,14 @@ function lazyRoute(load: RouteImport, isLayout = false): RouteObject["lazy"] {
 }
 
 function toRoutes(node: RouteNode, isRoot = false): RouteObject[] {
-  const { segment, layout: L, page: P } = node;
+  const { segment, layout: L, page: P, notFound: NF } = node;
   const children = node.children.flatMap((c) => toRoutes(c));
+
+  // not-found becomes a catch-all inside this segment, unless the user
+  // already defined their own [...rest] route at this level
+  if (NF && !node.children.some((c) => c.segment === "*")) {
+    children.push({ path: "*", lazy: lazyRoute(NF) });
+  }
 
   if (!isRoot && /^\(.*\)$/.test(segment)) {
     // Route groups add no URL segment; without a layout they vanish entirely

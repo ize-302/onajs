@@ -5,6 +5,7 @@ describe('isRouteFile', () => {
   it('matches page and layout files under appDir', () => {
     expect(isRouteFile('/proj/src/app/page.tsx', '/proj', 'src/app')).toBe(true)
     expect(isRouteFile('/proj/src/app/blog/layout.ts', '/proj', 'src/app')).toBe(true)
+    expect(isRouteFile('/proj/src/app/blog/not-found.tsx', '/proj', 'src/app')).toBe(true)
   })
 
   it('matches Windows backslash paths', () => {

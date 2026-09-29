@@ -154,3 +154,68 @@ describe('toRouteObjects', () => {
     expect(await screen.findByText('Home')).toBeDefined()
   })
 })
+
+describe('not-found', () => {
+  const NotFound = mod(() => <p>Not found</p>)
+  const BlogNotFound = mod(() => <p>No such post</p>)
+
+  it('root not-found renders for unknown URL inside root layout', async () => {
+    const routes: RouteNode = {
+      segment: '',
+      layout: RootLayout,
+      page: Home,
+      notFound: NotFound,
+      children: [{ segment: 'blog', page: BlogList, children: [] }]
+    }
+    renderAt(routes, '/nope/deep')
+    expect(await screen.findByText('Not found')).toBeDefined()
+    expect(await screen.findByText('Layout')).toBeDefined()
+    expect(screen.queryByText('Home')).toBeNull()
+  })
+
+  it('root not-found works without a root layout or page', async () => {
+    const routes: RouteNode = {
+      segment: '',
+      notFound: NotFound,
+      children: [{ segment: 'blog', page: BlogList, children: [] }]
+    }
+    renderAt(routes, '/nope')
+    expect(await screen.findByText('Not found')).toBeDefined()
+  })
+
+  it('matched pages are not shadowed by not-found', async () => {
+    const routes: RouteNode = {
+      segment: '',
+      page: Home,
+      notFound: NotFound,
+      children: [{ segment: 'blog', page: BlogList, children: [] }]
+    }
+    renderAt(routes, '/blog')
+    expect(await screen.findByText('Blog list')).toBeDefined()
+    expect(screen.queryByText('Not found')).toBeNull()
+  })
+
+  it('nested not-found handles unknown URLs under its segment only', async () => {
+    const routes: RouteNode = {
+      segment: '',
+      notFound: NotFound,
+      children: [{ segment: 'blog', page: BlogList, notFound: BlogNotFound, children: [] }]
+    }
+    renderAt(routes, '/blog/a/b')
+    expect(await screen.findByText('No such post')).toBeDefined()
+    cleanup()
+    renderAt(routes, '/other')
+    expect(await screen.findByText('Not found')).toBeDefined()
+  })
+
+  it('user catch-all route wins over not-found', async () => {
+    const routes: RouteNode = {
+      segment: '',
+      notFound: NotFound,
+      children: [{ segment: '*', page: mod(() => <p>Catch all</p>), children: [] }]
+    }
+    renderAt(routes, '/anything')
+    expect(await screen.findByText('Catch all')).toBeDefined()
+    expect(screen.queryByText('Not found')).toBeNull()
+  })
+})

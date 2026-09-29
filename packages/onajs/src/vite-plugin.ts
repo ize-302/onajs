@@ -43,7 +43,7 @@ export function fileRouter(options: FileRouterOptions = {}): Plugin {
 	};
 }
 
-// checks if file is a page or layout. Rebuilds if true, else ignores
+// checks if file is a page, layout or not-found. Rebuilds if true, else ignores
 export function isRouteFile(
 	file: string,
 	root: string,
@@ -57,7 +57,7 @@ export function isRouteFile(
 	const toPosix = (p: string) => p.replace(/\\/g, "/");
 	const absAppDir = toPosix(path.join(root, appDir)).replace(/\/$/, "");
 	const f = toPosix(file);
-	return f.startsWith(absAppDir + "/") && /\/(page|layout)\.tsx?$/.test(f);
+	return f.startsWith(absAppDir + "/") && /\/(page|layout|not-found)\.tsx?$/.test(f);
 }
 
 export function codegen(tree: RouteNode): string {
@@ -80,6 +80,13 @@ export function codegen(tree: RouteNode): string {
 				`const ${id} = () => import(${JSON.stringify(node.pageFile)})`,
 			);
 		}
+		if (node.notFoundFile && !idMap.has(node.notFoundFile)) {
+			const id = `_c${counter++}`;
+			idMap.set(node.notFoundFile, id);
+			lines.push(
+				`const ${id} = () => import(${JSON.stringify(node.notFoundFile)})`,
+			);
+		}
 		for (const child of node.children) collectFiles(child);
 	}
 
@@ -89,6 +96,8 @@ export function codegen(tree: RouteNode): string {
 		const parts: string[] = [`segment: ${JSON.stringify(node.segment)}`];
 		if (node.layoutFile) parts.push(`layout: ${idMap.get(node.layoutFile)}`);
 		if (node.pageFile) parts.push(`page: ${idMap.get(node.pageFile)}`);
+		if (node.notFoundFile)
+			parts.push(`notFound: ${idMap.get(node.notFoundFile)}`);
 		parts.push(`children: [${node.children.map(serializeNode).join(", ")}]`);
 		return `{ ${parts.join(", ")} }`;
 	}

@@ -4,7 +4,7 @@ import type { RouteNode } from '../src/scan-routes'
 
 function node(
   segment: string,
-  opts: { pageFile?: string; layoutFile?: string; children?: RouteNode[] } = {}
+  opts: { pageFile?: string; layoutFile?: string; notFoundFile?: string; children?: RouteNode[] } = {}
 ): RouteNode {
   return { segment, children: [], ...opts }
 }
@@ -43,6 +43,12 @@ describe('codegen', () => {
   it('layout referenced as layout in routes object', () => {
     const out = codegen(node('', { layoutFile: '/app/layout.tsx' }))
     expect(out).toMatch(/layout: _c\d+/)
+  })
+
+  it('not-found referenced as notFound in routes object', () => {
+    const out = codegen(node('', { notFoundFile: '/app/not-found.tsx' }))
+    expect(out).toContain(`() => import("/app/not-found.tsx")`)
+    expect(out).toMatch(/notFound: _c\d+/)
   })
 
   it('page and layout get separate ids', () => {
